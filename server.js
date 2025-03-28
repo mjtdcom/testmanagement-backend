@@ -3,31 +3,25 @@ const fs = require('fs');
 const path = require('path');
 const cors = require('cors');
 
+// Initialize express app first
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Middleware
+// Then apply middleware
 app.use(cors());
 app.use(express.json());
 app.use(express.static('public'));
 
-// Database setup
+// Path to database
 const dbPath = path.join(__dirname, 'database.json');
 
-const readDB = () => {
-  try {
-    const data = fs.readFileSync(dbPath, 'utf8');
-    return JSON.parse(data);
-  } catch (err) {
-    return { tests: [], users: [] }; // Initialize with empty arrays if file doesn't exist
-  }
-};
+// Read database
+const readDB = () => JSON.parse(fs.readFileSync(dbPath, 'utf8'));
 
-const writeDB = (data) => {
-  fs.writeFileSync(dbPath, JSON.stringify(data, null, 2), 'utf8');
-};
+// Save to database
+const writeDB = (data) => fs.writeFileSync(dbPath, JSON.stringify(data, null, 2), 'utf8');
 
-// Login endpoint
+// Add login endpoint
 app.post('/login', (req, res) => {
   const { username, password } = req.body;
   const db = readDB();
@@ -44,11 +38,11 @@ app.post('/login', (req, res) => {
   }
 });
 
-// Get all tests
+// Get all tests (Admins see all, users see only their own)
 app.get('/tests', (req, res) => {
   const db = readDB();
-  const username = req.headers['x-username'];
-  const userRole = req.headers['x-role'];
+  const username = req.headers['x-username']; // Username from request headers
+  const userRole = req.headers['x-role']; // Role from request headers
 
   if (userRole === 'admin') {
     return res.json(db.tests);
@@ -58,74 +52,18 @@ app.get('/tests', (req, res) => {
   res.json(userTests);
 });
 
-// Get single test by ID
-app.get('/tests/:id', (req, res) => {
-  const db = readDB();
-  const test = db.tests.find(t => t.id === parseInt(req.params.id));
-  const username = req.headers['x-username'];
-  const userRole = req.headers['x-role'];
-
-  if (!test) {
-    return res.status(404).json({ error: 'Test not found' });
-  }
-
-  if (userRole !== 'admin' && test.reportedBy !== username) {
-    return res.status(403).json({ error: 'Access denied' });
-  }
-
-  res.json(test);
-});
-
-// Create new test
+// Add new test
 app.post('/tests', (req, res) => {
   const db = readDB();
-  const newTest = {
-    ...req.body,
-    id: db.tests.length + 1,
-    reportedBy: req.headers['x-username'],
-    status: 'pending',
-    actions: [],
-    createdAt: new Date().toISOString(),
-    updatedAt: new Date().toISOString()
-  };
-  
+  const newTest = req.body;
+  newTest.id = db.tests.length + 1;
+  newTest.reportedBy = req.headers['x-username']; // Store who reported it
   db.tests.push(newTest);
   writeDB(db);
   res.status(201).json(newTest);
 });
 
-// Update test status (approve/reject)
-app.patch('/tests/:id/status', (req, res) => {
-  const db = readDB();
-  const userRole = req.headers['x-role'];
-  const { status, comment } = req.body;
-  
-  if (userRole !== 'admin') {
-    return res.status(403).json({ error: 'Access denied' });
-  }
-
-  const testId = parseInt(req.params.id);
-  const testIndex = db.tests.findIndex(test => test.id === testId);
-  
-  if (testIndex === -1) {
-    return res.status(404).json({ error: 'Test not found' });
-  }
-
-  // Update test status and add action log
-  db.tests[testIndex].status = status;
-  db.tests[testIndex].updatedAt = new Date().toISOString();
-  db.tests[testIndex].actions.push({
-    action: status,
-    by: req.headers['x-username'],
-    comment: comment || '',
-    timestamp: new Date().toISOString()
-  });
-
-  writeDB(db);
-  res.json(db.tests[testIndex]);
-});
-
-// Delete test (admin only)
+// Delete a test (Only Admins can delete)
 app.delete('/tests/:id', (req, res) => {
   const db = readDB();
   const userRole = req.headers['x-role'];
@@ -140,6 +78,4 @@ app.delete('/tests/:id', (req, res) => {
 });
 
 // Start server
-app.listen(PORT, () => {
-  console.log(`Server running on http://localhost:${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`));
