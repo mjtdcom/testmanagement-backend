@@ -166,42 +166,49 @@ async function deleteUser(username) {
 // Existing Functions (updated to use API) =============================
 
 async function handleLogin(e) {
-    e.preventDefault();
-    const username = document.getElementById('username').value;
-    const password = document.getElementById('password').value;
+  e.preventDefault();
+  const username = document.getElementById('username').value;
+  const password = document.getElementById('password').value;
+  
+  try {
+    const response = await fetch('/login', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ username, password })
+    });
     
-    // Try server login first
-    try {
-        const response = await fetch('/login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify({ username, password })
-        });
-        
-        if (response.ok) {
-            const user = await response.json();
-            currentUser = user;
-            loginError.classList.add('hidden');
-            showMainContent(user);
-            return;
-        }
-    } catch (error) {
-        console.log('Falling back to local authentication');
-    }
-    
-    // Fallback to local authentication if server fails
-    const user = users.find(u => u.username === username && u.password === password);
-    
-    if (user) {
-        currentUser = user;
-        loginError.classList.add('hidden');
-        showMainContent(user);
+    if (response.ok) {
+      const user = await response.json();
+      currentUser = user;
+      loginError.classList.add('hidden');
+      loginSection.classList.add('hidden');
+      mainContent.classList.remove('hidden');
+      welcomeMessage.innerHTML = `<i class="fas fa-smile"></i> Welcome, ${user.name}!`;
+      
+      // Show appropriate navigation based on role
+      document.querySelectorAll('.login-visible').forEach(el => el.classList.add('hidden'));
+      document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
+      
+      logoutLink.classList.remove('hidden');
+      recordLink.classList.remove('hidden');
+      viewLink.classList.remove('hidden');
+      
+      if (user.role === 'admin') {
+        document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
+      }
+      
+      showHome();
     } else {
-        loginError.textContent = 'Invalid username or password';
-        loginError.classList.remove('hidden');
+      const error = await response.json();
+      loginError.textContent = error.error || 'Invalid username or password';
+      loginError.classList.remove('hidden');
     }
+  } catch (error) {
+    loginError.textContent = 'Failed to connect to server';
+    loginError.classList.remove('hidden');
+  }
 }
 
 function showMainContent(user) {
