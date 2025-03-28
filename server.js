@@ -1,6 +1,25 @@
-// Add this at the top
+const express = require('express');
+const fs = require('fs');
+const path = require('path');
 const cors = require('cors');
+
+// Initialize express app first
+const app = express();
+const PORT = process.env.PORT || 3000;
+
+// Then apply middleware
 app.use(cors());
+app.use(express.json());
+app.use(express.static('public'));
+
+// Path to database
+const dbPath = path.join(__dirname, 'database.json');
+
+// Read database
+const readDB = () => JSON.parse(fs.readFileSync(dbPath, 'utf8'));
+
+// Save to database
+const writeDB = (data) => fs.writeFileSync(dbPath, JSON.stringify(data, null, 2), 'utf8');
 
 // Add login endpoint
 app.post('/login', (req, res) => {
@@ -18,26 +37,6 @@ app.post('/login', (req, res) => {
     res.status(401).json({ error: 'Invalid credentials' });
   }
 });
-
-// Update your existing endpoints to use reportedBy instead of recordedBy
-
-const express = require('express');
-const fs = require('fs');
-const path = require('path');
-const app = express();
-const PORT = process.env.PORT || 3000;
-
-app.use(express.json());
-app.use(express.static('public'));
-
-// Path to database
-const dbPath = path.join(__dirname, 'database.json');
-
-// Read database
-const readDB = () => JSON.parse(fs.readFileSync(dbPath, 'utf8'));
-
-// Save to database
-const writeDB = (data) => fs.writeFileSync(dbPath, JSON.stringify(data, null, 2), 'utf8');
 
 // Get all tests (Admins see all, users see only their own)
 app.get('/tests', (req, res) => {
