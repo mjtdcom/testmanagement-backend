@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Test Management System</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <header class="app-header">
+            <div class="logo">
+                <i class="fas fa-flask"></i>
+                <h1>Test Management System</h1>
+            </div>
+            <nav class="main-nav">
+                <ul>
+                    <li><a href="#" id="home-link" class="active"><i class="fas fa-home"></i> Home</a></li>
+                    <li><a href="#" id="record-link"><i class="fas fa-plus-circle"></i> Record Test</a></li>
+                    <li><a href="#" id="view-link"><i class="fas fa-list"></i> View Tests</a></li>
+                    <li><a href="#" id="admin-link" class="admin-only"><i class="fas fa-cog"></i> Admin</a></li>
+                    <li><a href="#" id="logout-link"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                    <li><a href="#" id="login-link" class="login-visible"><i class="fas fa-sign-in-alt"></i> Login</a></li>
+                </ul>
+            </nav>
+        </header>
+
+        <main class="app-main">
+            <!-- Login Section -->
+            <section id="login-section" class="content-section">
+                <div class="card">
+                    <h2><i class="fas fa-user-circle"></i> Login</h2>
+                    <div id="login-error" class="alert error hidden"></div>
+                    <form id="login-form">
+                        <div class="form-group">
+                            <label for="username"><i class="fas fa-user"></i> Username</label>
+                            <input type="text" id="username" name="username" placeholder="Enter your username" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="password"><i class="fas fa-lock"></i> Password</label>
+                            <input type="password" id="password" name="password" placeholder="Enter your password" required>
+                        </div>
+                        <button type="submit" class="btn primary">
+                            <i class="fas fa-sign-in-alt"></i> Login
+                        </button>
+                    </form>
+                </div>
+            </section>
+
+            <!-- Main Content (hidden until login) -->
+            <section id="main-content" class="content-section hidden">
+                <div class="welcome-banner">
+                    <h2 id="welcome-message"><i class="fas fa-smile"></i> Welcome, User!</h2>
+                </div>
+                
+                <!-- Record Test Section -->
+                <div id="record-section" class="card hidden">
+                    <h3><i class="fas fa-plus-circle"></i> Record Unassigned Test</h3>
+                    <div id="record-error" class="alert error hidden"></div>
+                    <div id="record-success" class="alert success hidden"></div>
+                    <form id="record-form">
+                        <div class="form-group">
+                            <label for="test-name"><i class="fas fa-tag"></i> Test Name</label>
+                            <input type="text" id="test-name" name="test-name" placeholder="Enter test name" required>
+                        </div>
+                        <div class="form-group">
+                            <label for="test-description"><i class="fas fa-align-left"></i> Description</label>
+                            <textarea id="test-description" name="test-description" rows="3" placeholder="Enter test description" required></textarea>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="test-category"><i class="fas fa-folder"></i> Category</label>
+                                <select id="test-category" name="test-category" required>
+                                    <option value="">Select Category</option>
+                                    <option value="Functional">Functional</option>
+                                    <option value="Performance">Performance</option>
+                                    <option value="Security">Security</option>
+                                    <option value="Usability">Usability</option>
+                                    <option value="Compatibility">Compatibility</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="test-priority"><i class="fas fa-exclamation-circle"></i> Priority</label>
+                                <select id="test-priority" name="test-priority" required>
+                                    <option value="">Select Priority</option>
+                                    <option value="High">High</option>
+                                    <option value="Medium">Medium</option>
+                                    <option value="Low">Low</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label for="test-created-date"><i class="fas fa-calendar-alt"></i> Created Date</label>
+                                <input type="date" id="test-created-date" name="test-created-date" required>
+                            </div>
+                        </div>
+                        <button type="submit" class="btn primary">
+                            <i class="fas fa-save"></i> Record Test
+                        </button>
+                    </form>
+                </div>
+                
+                <!-- View Tests Section -->
+                <div id="view-section" class="card hidden">
+                    <div class="table-header">
+                        <h3><i class="fas fa-list"></i> Unassigned Tests</h3>
+                        <div class="search-box">
+                            <i class="fas fa-search"></i>
+                            <input type="text" id="search-tests" placeholder="Search tests...">
+                        </div>
+                    </div>
+                    <div class="table-responsive">
+                        <table id="tests-table">
+                            <thead>
+                                <tr>
+                                    <th>Test Name</th>
+                                    <th>Description</th>
+                                    <th>Category</th>
+                                    <th>Priority</th>
+                                    <th>Created Date</th>
+                                    <th>Recorded By</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="tests-table-body">
+                                <!-- Tests will be populated here by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                
+                <!-- Admin Section -->
+                <div id="admin-section" class="card hidden">
+                    <div class="admin-header">
+                        <h3><i class="fas fa-users-cog"></i> User Management</h3>
+                        <button id="add-user-btn" class="btn primary">
+                            <i class="fas fa-user-plus"></i> Add New User
+                        </button>
+                    </div>
+                    <div id="admin-error" class="alert error hidden"></div>
+                    <div id="admin-success" class="alert success hidden"></div>
+                    
+                    <div id="add-user-form" class="hidden">
+                        <h4><i class="fas fa-user-edit"></i> Add New User</h4>
+                        <form id="user-form">
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label for="new-username"><i class="fas fa-user"></i> Username</label>
+                                    <input type="text" id="new-username" name="new-username" placeholder="Enter username" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="new-password"><i class="fas fa-lock"></i> Password</label>
+                                    <input type="password" id="new-password" name="new-password" placeholder="Enter password" required>
+                                </div>
+                                <div class="form-group">
+                                    <label for="user-role"><i class="fas fa-user-tag"></i> Role</label>
+                                    <select id="user-role" name="user-role" required>
+                                        <option value="tester">Tester</option>
+                                        <option value="lead">Test Lead</option>
+                                        <option value="admin">Admin</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div class="form-buttons">
+                                <button type="submit" class="btn primary">
+                                    <i class="fas fa-save"></i> Save User
+                                </button>
+                                <button type="button" id="cancel-user-btn" class="btn secondary">
+                                    <i class="fas fa-times"></i> Cancel
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                    
+                    <div class="table-responsive">
+                        <table id="users-table">
+                            <thead>
+                                <tr>
+                                    <th>Username</th>
+                                    <th>Role</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="users-table-body">
+                                <!-- Users will be populated here by JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <footer class="app-footer">
+            <p>&copy; 2023 Test Management System. All rights reserved.</p>
+        </footer>
+    </div>
+
+    <script src="script.js"></script>
+</body>
+</html>
