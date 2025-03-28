@@ -1,3 +1,8 @@
 {
-	"test": []
+  "tests": [],
+  "users": [
+    {"username": "tester1", "password": "test123", "role": "tester", "name": "John Tester"},
+    {"username": "lead1", "password": "lead123", "role": "lead", "name": "Sarah Lead"},
+    {"username": "admin1", "password": "admin123", "role": "admin", "name": "Admin User"}
+  ]
 }
