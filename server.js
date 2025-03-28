@@ -1,10 +1,8 @@
-require('dotenv').config();
-const PORT = process.env.PORT || 3000;
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
 const app = express();
-
+const PORT = process.env.PORT || 3000;
 
 app.use(express.json());
 app.use(express.static('public'));
@@ -17,6 +15,11 @@ const readDB = () => JSON.parse(fs.readFileSync(dbPath, 'utf8'));
 
 // Save to database
 const writeDB = (data) => fs.writeFileSync(dbPath, JSON.stringify(data, null, 2), 'utf8');
+
+// Serve index.html when visiting `/`
+app.get('/', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'index.html'));
+});
 
 // Get all tests
 app.get('/tests', (req, res) => res.json(readDB().tests));
@@ -40,6 +43,4 @@ app.delete('/tests/:id', (req, res) => {
 });
 
 // Start server
-app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server running on port ${PORT}`);
-});
+app.listen(PORT, () => console.log(`Server running on http://localhost:${PORT}`))
