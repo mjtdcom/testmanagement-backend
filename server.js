@@ -1,3 +1,26 @@
+// Add this at the top
+const cors = require('cors');
+app.use(cors());
+
+// Add login endpoint
+app.post('/login', (req, res) => {
+  const { username, password } = req.body;
+  const db = readDB();
+  const user = db.users.find(u => u.username === username && u.password === password);
+  
+  if (user) {
+    res.json({
+      username: user.username,
+      name: user.name,
+      role: user.role
+    });
+  } else {
+    res.status(401).json({ error: 'Invalid credentials' });
+  }
+});
+
+// Update your existing endpoints to use reportedBy instead of recordedBy
+
 const express = require('express');
 const fs = require('fs');
 const path = require('path');
