@@ -32,7 +32,30 @@ let tests = [
 // Current user
 let currentUser = null;
 
-// DOM elements (keep all existing ones)
+// DOM elements
+const loginSection = document.getElementById('login-section');
+const mainContent = document.getElementById('main-content');
+const recordSection = document.getElementById('record-section');
+const viewSection = document.getElementById('view-section');
+const adminSection = document.getElementById('admin-section');
+const loginForm = document.getElementById('login-form');
+const recordForm = document.getElementById('record-form');
+const userForm = document.getElementById('user-form');
+const loginError = document.getElementById('login-error');
+const recordError = document.getElementById('record-error');
+const recordSuccess = document.getElementById('record-success');
+const welcomeMessage = document.getElementById('welcome-message');
+const testsTableBody = document.getElementById('tests-table-body');
+const usersTableBody = document.getElementById('users-table-body');
+const searchTestsInput = document.getElementById('search-tests');
+const homeLink = document.getElementById('home-link');
+const recordLink = document.getElementById('record-link');
+const viewLink = document.getElementById('view-link');
+const adminLink = document.getElementById('admin-link');
+const logoutLink = document.getElementById('logout-link');
+const loginLink = document.getElementById('login-link');
+const addUserBtn = document.getElementById('add-user-btn');
+const cancelUserBtn = document.getElementById('cancel-user-btn');
 
 // Initialize the page
 document.addEventListener('DOMContentLoaded', function() {
@@ -57,69 +80,74 @@ document.addEventListener('DOMContentLoaded', function() {
     showLogin();
 });
 
-// Update the handleLogin function to properly clear and maintain state
+// Login function
 function handleLogin(e) {
-    e.preventDefault(); // This prevents the default form submission
-    console.log("Login attempt"); // Debugging line
+    e.preventDefault();
     
     const username = document.getElementById('username').value;
     const password = document.getElementById('password').value;
-    console.log("Username:", username, "Password:", password); // Debugging
     
     const user = users.find(u => u.username === username && u.password === password);
     
     if (user) {
-        console.log("Login successful for:", user.name); // Debugging
         currentUser = user;
         loginSection.classList.add('hidden');
         mainContent.classList.remove('hidden');
         welcomeMessage.textContent = `Welcome, ${user.name}!`;
+        
+        // Show/hide admin link based on role
+        if (user.role === 'admin') {
+            adminLink.classList.remove('hidden');
+        } else {
+            adminLink.classList.add('hidden');
+        }
+        
         showHome();
     } else {
-        console.log("Login failed"); // Debugging
         loginError.textContent = 'Invalid username or password';
         loginError.classList.remove('hidden');
     }
 }
-// Updated handleLogout (as shown above)
+
+// Logout function
 function handleLogout() {
     currentUser = null;
     mainContent.classList.add('hidden');
     loginSection.classList.remove('hidden');
-    // Don't clear the username/password fields here
     loginError.classList.add('hidden');
-    
-    // Reset navigation
-    document.querySelectorAll('.login-visible').forEach(el => el.classList.remove('hidden'));
-    document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
-    logoutLink.classList.add('hidden');
+    loginForm.reset();
 }
+
+// Navigation functions
 function showLogin() {
-    if (currentUser) {
-        handleLogout();
-    } else {
-        loginSection.classList.remove('hidden');
-        mainContent.classList.add('hidden');
-        // Don't clear the fields when showing login
-    }
+    loginSection.classList.remove('hidden');
+    mainContent.classList.add('hidden');
 }
 
 function showHome() {
+    if (!currentUser) {
+        showLogin();
+        return;
+    }
+    
     recordSection.classList.add('hidden');
     viewSection.classList.add('hidden');
     adminSection.classList.add('hidden');
     
-    // Show appropriate content based on role
-    if (currentUser) {
-        if (currentUser.role === 'hr' || currentUser.role === 'procurement') {
-            showRecordSection();
-        } else {
-            showViewSection();
-        }
+    // Redirect to appropriate section based on role
+    if (currentUser.role === 'hr' || currentUser.role === 'procurement') {
+        showRecordSection();
+    } else {
+        showViewSection();
     }
 }
 
 function showRecordSection() {
+    if (!currentUser) {
+        showLogin();
+        return;
+    }
+    
     recordSection.classList.remove('hidden');
     viewSection.classList.add('hidden');
     adminSection.classList.add('hidden');
@@ -127,6 +155,11 @@ function showRecordSection() {
 }
 
 function showViewSection() {
+    if (!currentUser) {
+        showLogin();
+        return;
+    }
+    
     recordSection.classList.add('hidden');
     viewSection.classList.remove('hidden');
     adminSection.classList.add('hidden');
@@ -134,14 +167,18 @@ function showViewSection() {
 }
 
 function showAdminSection() {
-    if (currentUser && currentUser.role === 'admin') {
-        recordSection.classList.add('hidden');
-        viewSection.classList.add('hidden');
-        adminSection.classList.remove('hidden');
-        renderUsersTable();
+    if (!currentUser || currentUser.role !== 'admin') {
+        showLogin();
+        return;
     }
+    
+    recordSection.classList.add('hidden');
+    viewSection.classList.add('hidden');
+    adminSection.classList.remove('hidden');
+    renderUsersTable();
 }
 
+// Test record function
 function handleRecordTest(e) {
     e.preventDefault();
     recordError.classList.add('hidden');
@@ -153,45 +190,39 @@ function handleRecordTest(e) {
     const priority = document.getElementById('test-priority').value;
     const createdDate = document.getElementById('test-created-date').value;
     
-    // Basic validation
     if (!testName || !description || !category || !priority || !createdDate) {
         recordError.textContent = 'All fields are required';
         recordError.classList.remove('hidden');
         return;
     }
     
-    // Add new test with current user as recorder
     const newTest = {
-        id: tests.length + 1,
+        id: tests.length > 0 ? Math.max(...tests.map(t => t.id)) + 1 : 1,
         name: testName,
         description: description,
         category: category,
         priority: priority,
         createdDate: createdDate,
         recordedBy: currentUser.name,
-        status: 'pending' // Default status
+        status: 'pending'
     };
     
     tests.push(newTest);
-    
-    // Clear form but keep date as today
     recordForm.reset();
     document.getElementById('test-created-date').valueAsDate = new Date();
     
-    // Show success message
     recordSuccess.textContent = 'Test recorded successfully!';
     recordSuccess.classList.remove('hidden');
     
-    // Update tests table if it's visible
-    if (!viewSection.classList.contains('hidden')) {
+    if (viewSection.classList.contains('hidden') {
         renderTestsTable();
     }
 }
 
+// Render tests table
 function renderTestsTable() {
     testsTableBody.innerHTML = '';
     
-    // Filter tests - admin sees all, others see only their own
     let filteredTests = tests;
     if (currentUser.role !== 'admin') {
         filteredTests = tests.filter(test => test.recordedBy === currentUser.name);
@@ -229,10 +260,6 @@ function renderTestsTable() {
     });
     
     // Add event listeners to status buttons
-    document.addEventListener('DOMContentLoaded', function() {
-    loginForm.addEventListener('submit', handleLogin);
-    // ... other event listeners
-});
     document.querySelectorAll('.approve-test').forEach(button => {
         button.addEventListener('click', function() {
             const testId = parseInt(this.getAttribute('data-id'));
@@ -248,6 +275,7 @@ function renderTestsTable() {
     });
 }
 
+// Update test status
 function updateTestStatus(id, status) {
     const testIndex = tests.findIndex(test => test.id === id);
     if (testIndex !== -1) {
@@ -256,14 +284,102 @@ function updateTestStatus(id, status) {
     }
 }
 
-// ... (keep all other existing functions like filterTests, handleAddUser, etc.)
+// Filter tests
+function filterTests() {
+    const searchTerm = searchTestsInput.value.toLowerCase();
+    const rows = testsTableBody.querySelectorAll('tr');
+    
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(searchTerm) ? '' : 'none';
+    });
+}
 
-// Update the style section
+// User management functions
+function showAddUserForm() {
+    document.getElementById('user-form-container').classList.remove('hidden');
+    addUserBtn.classList.add('hidden');
+}
+
+function hideAddUserForm() {
+    document.getElementById('user-form-container').classList.add('hidden');
+    addUserBtn.classList.remove('hidden');
+    userForm.reset();
+}
+
+function handleAddUser(e) {
+    e.preventDefault();
+    
+    const username = document.getElementById('new-username').value;
+    const password = document.getElementById('new-password').value;
+    const name = document.getElementById('new-name').value;
+    const role = document.getElementById('new-role').value;
+    
+    if (!username || !password || !name || !role) {
+        alert('All fields are required');
+        return;
+    }
+    
+    if (users.some(u => u.username === username)) {
+        alert('Username already exists');
+        return;
+    }
+    
+    const newUser = {
+        username,
+        password,
+        role,
+        name
+    };
+    
+    users.push(newUser);
+    renderUsersTable();
+    hideAddUserForm();
+}
+
+function renderUsersTable() {
+    usersTableBody.innerHTML = '';
+    
+    users.forEach(user => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${user.username}</td>
+            <td>${user.name}</td>
+            <td><span class="role-badge ${user.role}">${user.role}</span></td>
+        `;
+        usersTableBody.appendChild(row);
+    });
+}
+
+// Add styles
 const style = document.createElement('style');
 style.textContent = `
-/* ... (keep all existing styles) */
+.hidden {
+    display: none;
+}
 
-/* Add status badge styles */
+.priority-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 50rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.priority-badge.high {
+    background-color: #f8d7da;
+    color: #721c24;
+}
+
+.priority-badge.medium {
+    background-color: #fff3cd;
+    color: #856404;
+}
+
+.priority-badge.low {
+    background-color: #d4edda;
+    color: #155724;
+}
+
 .status-badge {
     padding: 0.25rem 0.5rem;
     border-radius: 50rem;
@@ -282,7 +398,14 @@ style.textContent = `
     color: #856404;
 }
 
-/* Update role badge colors */
+.role-badge {
+    padding: 0.25rem 0.5rem;
+    border-radius: 50rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: capitalize;
+}
+
 .role-badge.admin {
     background-color: #d4edda;
     color: #155724;
@@ -303,9 +426,77 @@ style.textContent = `
     gap: 0.5rem;
 }
 
-/* Keep login form fields on failed attempt */
-#login-form input {
-    background-color: white;
+.btn {
+    padding: 0.375rem 0.75rem;
+    border-radius: 0.25rem;
+    font-size: 0.875rem;
+    cursor: pointer;
+    border: 1px solid transparent;
+}
+
+.btn.primary {
+    background-color: #007bff;
+    color: white;
+}
+
+.btn.secondary {
+    background-color: #6c757d;
+    color: white;
+}
+
+.btn:disabled {
+    opacity: 0.65;
+    cursor: not-allowed;
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+th, td {
+    padding: 0.75rem;
+    text-align: left;
+    border-bottom: 1px solid #dee2e6;
+}
+
+th {
+    background-color: #f8f9fa;
+    font-weight: 600;
+}
+
+form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.form-group label {
+    font-weight: 600;
+}
+
+.form-group input, 
+.form-group select, 
+.form-group textarea {
+    padding: 0.375rem 0.75rem;
+    border: 1px solid #ced4da;
+    border-radius: 0.25rem;
+}
+
+.error {
+    color: #dc3545;
+    font-size: 0.875rem;
+}
+
+.success {
+    color: #28a745;
+    font-size: 0.875rem;
 }
 `;
 document.head.appendChild(style);
