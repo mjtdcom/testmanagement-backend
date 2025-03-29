@@ -58,9 +58,65 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 // Updated handleLogin (as shown above)
-
+// Update the handleLogin function to properly clear and maintain state
+function handleLogin(e) {
+    e.preventDefault();
+    loginError.classList.add('hidden');
+    
+    const username = document.getElementById('username').value;
+    const password = document.getElementById('password').value;
+    
+    // Find user in database
+    const user = users.find(u => u.username === username && u.password === password);
+    
+    if (user) {
+        currentUser = user;
+        loginError.classList.add('hidden');
+        loginSection.classList.add('hidden');
+        mainContent.classList.remove('hidden');
+        welcomeMessage.innerHTML = `<i class="fas fa-smile"></i> Welcome, ${user.name}!`;
+        
+        // Reset forms and errors when logging in
+        recordForm.reset();
+        document.getElementById('test-created-date').valueAsDate = new Date();
+        recordError.classList.add('hidden');
+        recordSuccess.classList.add('hidden');
+        adminError.classList.add('hidden');
+        adminSuccess.classList.add('hidden');
+        
+        // Show appropriate navigation based on role
+        document.querySelectorAll('.login-visible').forEach(el => el.classList.add('hidden'));
+        document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
+        
+        logoutLink.classList.remove('hidden');
+        recordLink.classList.remove('hidden');
+        viewLink.classList.remove('hidden');
+        
+        if (user.role === 'admin') {
+            document.querySelectorAll('.admin-only').forEach(el => el.classList.remove('hidden'));
+        }
+        
+        // Show home by default
+        showHome();
+    } else {
+        loginError.textContent = 'Invalid username or password';
+        loginError.classList.remove('hidden');
+        // Don't clear the fields on failed login
+    }
+}
 // Updated handleLogout (as shown above)
-
+function handleLogout() {
+    currentUser = null;
+    mainContent.classList.add('hidden');
+    loginSection.classList.remove('hidden');
+    // Don't clear the username/password fields here
+    loginError.classList.add('hidden');
+    
+    // Reset navigation
+    document.querySelectorAll('.login-visible').forEach(el => el.classList.remove('hidden'));
+    document.querySelectorAll('.admin-only').forEach(el => el.classList.add('hidden'));
+    logoutLink.classList.add('hidden');
+}
 function showLogin() {
     if (currentUser) {
         handleLogout();
